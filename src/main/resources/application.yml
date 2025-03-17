@@ -7,5 +7,5 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
-      database: postgresql
-      database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
