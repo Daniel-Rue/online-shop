@@ -1,9 +1,8 @@
 package ru.kon.onlineshop.dto.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -17,6 +16,8 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Table(name = "categories")
+@ToString(exclude = {"products", "children"})
+@EqualsAndHashCode(exclude = {"products", "children"})
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,5 +35,6 @@ public class Category {
 
     @ManyToMany(mappedBy = "categories")
     @Builder.Default
+    @JsonIgnoreProperties
     private Set<Product> products = new HashSet<>();
 }

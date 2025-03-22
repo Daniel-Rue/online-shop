@@ -1,7 +1,6 @@
 package ru.kon.onlineshop.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.kon.onlineshop.dto.category.CategoryDto;
@@ -29,7 +28,6 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
 
     @Override
     public List<ProductDto> getAllProducts(String sortBy, String sortOrder) {
@@ -70,7 +68,13 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
-        modelMapper.map(request, product);
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setImageUrl(request.getImageUrl());
+        product.setBasePrice(request.getBasePrice());
+        product.setDiscountPrice(request.getDiscountPrice());
+        product.setStockQuantity(request.getStockQuantity());
+
         Product updatedProduct = productRepository.save(product);
         return convertToProductDetailsDto(updatedProduct);
     }
@@ -98,15 +102,42 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         return product.getCategories().stream()
-                .map(category -> modelMapper.map(category, CategoryDto.class))
+                .map(this::convertToCategoryDto)
                 .collect(Collectors.toSet());
     }
 
     private ProductDto convertToProductDto(Product product) {
-        return modelMapper.map(product, ProductDto.class);
+        ProductDto dto = new ProductDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setImageUrl(product.getImageUrl());
+        dto.setBasePrice(product.getBasePrice());
+        dto.setDiscountPrice(product.getDiscountPrice());
+        dto.setStockQuantity(product.getStockQuantity());
+        return dto;
     }
 
     private ProductDetailsDto convertToProductDetailsDto(Product product) {
-        return modelMapper.map(product, ProductDetailsDto.class);
+        ProductDetailsDto dto = new ProductDetailsDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setImageUrl(product.getImageUrl());
+        dto.setBasePrice(product.getBasePrice());
+        dto.setDiscountPrice(product.getDiscountPrice());
+        dto.setStockQuantity(product.getStockQuantity());
+        dto.setCategoryIds(
+                product.getCategories().stream()
+                        .map(Category::getId)
+                        .collect(Collectors.toSet())
+        );
+        return dto;
+    }
+
+    private CategoryDto convertToCategoryDto(Category category) {
+        CategoryDto dto = new CategoryDto();
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+        return dto;
     }
 }

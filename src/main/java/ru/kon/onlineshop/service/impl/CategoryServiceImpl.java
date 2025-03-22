@@ -1,7 +1,6 @@
 package ru.kon.onlineshop.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.kon.onlineshop.dto.category.CategoryDto;
@@ -17,6 +16,7 @@ import ru.kon.onlineshop.exceptions.category.CategoryNotFoundException;
 import ru.kon.onlineshop.service.CategoryService;
 
 import javax.transaction.Transactional;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
-    private final ModelMapper modelMapper;
 
     @Override
     public List<CategoryTreeDto> getFullCategoryTree() {
@@ -60,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .build();
 
         Category savedCategory = categoryRepository.save(newCategory);
-        return modelMapper.map(savedCategory, CategoryDto.class);
+        return convertToCategoryDto(savedCategory);
     }
 
     @Override
@@ -77,7 +76,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setName(request.getName());
         category.setParent(parent);
         Category updatedCategory = categoryRepository.save(category);
-        return modelMapper.map(updatedCategory, CategoryDto.class);
+        return convertToCategoryDto(updatedCategory);
     }
 
     @Override
@@ -98,22 +97,43 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private CategoryTreeDto convertToTreeDto(Category category) {
-        CategoryTreeDto dto = modelMapper.map(category, CategoryTreeDto.class);
+        CategoryTreeDto dto = new CategoryTreeDto();
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+
         if (!category.getChildren().isEmpty()) {
             List<CategoryTreeDto> children = category.getChildren().stream()
                     .map(this::convertToTreeDto)
                     .collect(Collectors.toList());
             dto.setChildren(children);
+        } else {
+            dto.setChildren(Collections.emptyList());
         }
+        return dto;
+    }
+
+    private CategoryDto convertToCategoryDto(Category category) {
+        CategoryDto dto = new CategoryDto();
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+        dto.setParentId(category.getParent() != null ? category.getParent().getId() : null);
+        dto.setProductCount(category.getProducts().size());
+        return dto;
+    }
+
+    private ProductDto convertToProductDto(Product product) {
+        ProductDto dto = new ProductDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setImageUrl(product.getImageUrl());
+        dto.setBasePrice(product.getBasePrice());
+        dto.setDiscountPrice(product.getDiscountPrice());
+        dto.setStockQuantity(product.getStockQuantity());
         return dto;
     }
 
     private Set<Long> getCategoryWithAllChildrenIds(Long categoryId) {
         List<Long> categoryIds = categoryRepository.findCategoryAndAllChildrenIds(categoryId);
         return new HashSet<>(categoryIds);
-    }
-
-    private ProductDto convertToProductDto(Product product) {
-        return modelMapper.map(product, ProductDto.class);
     }
 }

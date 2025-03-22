@@ -16,5 +16,5 @@ public class ProductDetailsDto {
     private BigDecimal discountPrice;
     private int stockQuantity;
     @Singular
-    private Set<CategoryDto> categories;
+    private Set<Long> categoryIds;
 }

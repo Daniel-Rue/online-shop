@@ -1,9 +1,7 @@
 package ru.kon.onlineshop.dto.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -16,6 +14,8 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Table(name = "products")
+@ToString(exclude = "categories")
+@EqualsAndHashCode(exclude = "categories")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,5 +46,6 @@ public class Product {
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
     @Builder.Default
+    @JsonIgnoreProperties
     private Set<Category> categories = new HashSet<>();
 }
