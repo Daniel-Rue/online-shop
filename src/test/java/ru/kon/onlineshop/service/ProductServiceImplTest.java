@@ -7,14 +7,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 import ru.kon.onlineshop.dto.category.CategoryDto;
-import ru.kon.onlineshop.dto.entity.Category;
-import ru.kon.onlineshop.dto.entity.Product;
+import ru.kon.onlineshop.entity.Category;
+import ru.kon.onlineshop.entity.Product;
 import ru.kon.onlineshop.dto.product.CreateProductRequest;
 import ru.kon.onlineshop.dto.product.ProductDetailsDto;
 import ru.kon.onlineshop.dto.product.ProductDto;
 import ru.kon.onlineshop.dto.product.UpdateProductRequest;
-import ru.kon.onlineshop.dto.repository.CategoryRepository;
-import ru.kon.onlineshop.dto.repository.ProductRepository;
+import ru.kon.onlineshop.repository.CategoryRepository;
+import ru.kon.onlineshop.repository.ProductRepository;
 import ru.kon.onlineshop.exceptions.product.ProductNotFoundException;
 import ru.kon.onlineshop.service.impl.ProductServiceImpl;
 
