@@ -2,10 +2,7 @@ package ru.kon.onlineshop.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.kon.onlineshop.dto.cart.CartItemDto;
-import ru.kon.onlineshop.dto.cart.CartItemRequest;
-import ru.kon.onlineshop.dto.cart.CartResponse;
-import ru.kon.onlineshop.dto.cart.OrderResponse;
+import ru.kon.onlineshop.dto.cart.*;
 import ru.kon.onlineshop.entity.*;
 import ru.kon.onlineshop.exceptions.cart.CartItemNotFoundException;
 import ru.kon.onlineshop.exceptions.cart.EmptyCartException;
@@ -18,6 +15,7 @@ import ru.kon.onlineshop.service.CartService;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -232,8 +230,21 @@ public class CartServiceImpl implements CartService {
     private OrderResponse mapToOrderResponse(Order order) {
         return OrderResponse.builder()
                 .orderId(order.getId())
+                .userId(order.getUser().getId())
+                .items(order.getItems().stream()
+                        .map(this::mapToOrderItemDto)
+                        .collect(Collectors.toList()))
                 .totalAmount(order.getTotalAmount())
                 .createdAt(order.getCreatedAt())
+                .build();
+    }
+
+    private OrderItemDto mapToOrderItemDto(OrderItem item) {
+        return OrderItemDto.builder()
+                .productId(item.getProduct().getId())
+                .productName(item.getProduct().getName())
+                .quantity(item.getQuantity())
+                .priceAtOrder(item.getPriceAtOrder())
                 .build();
     }
 }
