@@ -7,11 +7,11 @@ import ru.kon.onlineshop.dto.category.CategoryDto;
 import ru.kon.onlineshop.dto.category.CategoryTreeDto;
 import ru.kon.onlineshop.dto.category.CreateCategoryRequest;
 import ru.kon.onlineshop.dto.category.UpdateCategoryRequest;
-import ru.kon.onlineshop.dto.entity.Category;
-import ru.kon.onlineshop.dto.entity.Product;
+import ru.kon.onlineshop.entity.Category;
+import ru.kon.onlineshop.entity.Product;
 import ru.kon.onlineshop.dto.product.ProductDto;
-import ru.kon.onlineshop.dto.repository.CategoryRepository;
-import ru.kon.onlineshop.dto.repository.ProductRepository;
+import ru.kon.onlineshop.repository.CategoryRepository;
+import ru.kon.onlineshop.repository.ProductRepository;
 import ru.kon.onlineshop.exceptions.category.CategoryNotFoundException;
 import ru.kon.onlineshop.service.CategoryService;
 
