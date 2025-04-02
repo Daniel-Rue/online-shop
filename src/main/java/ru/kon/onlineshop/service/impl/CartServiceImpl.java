@@ -11,6 +11,7 @@ import ru.kon.onlineshop.exceptions.user.UserNotFoundException;
 import ru.kon.onlineshop.repository.*;
 import ru.kon.onlineshop.exceptions.product.ProductNotFoundException;
 import ru.kon.onlineshop.service.CartService;
+import ru.kon.onlineshop.service.EmailService;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ public class CartServiceImpl implements CartService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     @Override
     public CartResponse getCart(Long userId) {
@@ -76,6 +78,10 @@ public class CartServiceImpl implements CartService {
         Order order = createOrder(cart);
         updateStockQuantities(cart);
         clearCart(cart);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        emailService.sendOrderConfirmation(order, user.getEmail());
 
         return mapToOrderResponse(order);
     }

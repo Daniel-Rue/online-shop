@@ -9,3 +9,19 @@ spring:
       ddl-auto: update
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: smtp.yandex.ru
+    port: 465
+    username: danil134567@yandex.ru
+    password: qwtepjpisgkfeyvd
+    test-connection: true
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
