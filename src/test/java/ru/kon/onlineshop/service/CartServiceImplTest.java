@@ -11,7 +11,6 @@ import ru.kon.onlineshop.dto.cart.OrderResponse;
 import ru.kon.onlineshop.entity.*;
 import ru.kon.onlineshop.exceptions.cart.CartItemNotFoundException;
 import ru.kon.onlineshop.exceptions.cart.EmptyCartException;
-import ru.kon.onlineshop.exceptions.product.ProductNotFoundException;
 import ru.kon.onlineshop.exceptions.user.UserNotFoundException;
 import ru.kon.onlineshop.repository.*;
 import ru.kon.onlineshop.service.impl.CartServiceImpl;
@@ -37,6 +36,8 @@ class CartServiceImplTest {
     private OrderRepository orderRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private CartServiceImpl cartService;
@@ -98,21 +99,27 @@ class CartServiceImplTest {
 
     @Test
     void checkout_ValidCart_CreatesOrder() {
-        Cart cart = createTestCartWithItems(userId);
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
+        User testUser = User.builder()
+                .id(userId)
+                .email("test@example.com")
+                .build();
 
-        // Имитируем сохранение заказа с присвоением ID
-        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+        Cart cart = createTestCartWithItems(userId);
+        cart.setUser(testUser);
+
+        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+        when(orderRepository.save(any())).thenAnswer(inv -> {
             Order order = inv.getArgument(0);
-            order.setId(1L); // Явно устанавливаем ID
+            order.setId(1L);
             return order;
         });
 
         OrderResponse response = cartService.checkout(userId);
 
         verify(productRepository, times(2)).save(any(Product.class));
-
         verify(cartItemRepository).deleteAllByCart(cart);
+        verify(emailService).sendOrderConfirmation(any(Order.class), eq("test@example.com"));
     }
 
     @Test
