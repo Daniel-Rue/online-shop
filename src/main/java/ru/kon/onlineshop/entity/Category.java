@@ -15,7 +15,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Table(name = "categories")
-@ToString(exclude = {"products", "children"})
+@ToString(exclude = {"products", "children", "parent"})
 @EqualsAndHashCode(exclude = {"products", "children"})
 public class Category {
     @Id

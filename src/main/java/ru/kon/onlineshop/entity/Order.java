@@ -1,9 +1,6 @@
 package ru.kon.onlineshop.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -17,6 +14,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = "items")
+@EqualsAndHashCode(exclude = "items")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
