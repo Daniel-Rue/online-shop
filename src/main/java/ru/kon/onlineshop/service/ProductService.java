@@ -13,7 +13,8 @@ public interface ProductService {
 
     /**
      * Получение всех товаров с сортировкой
-     * @param sortBy поле для сортировки (например, "basePrice", "name")
+     *
+     * @param sortBy    поле для сортировки (например, "basePrice", "name")
      * @param sortOrder порядок сортировки ("asc" или "desc")
      * @return список товаров в формате DTO
      */
@@ -21,6 +22,7 @@ public interface ProductService {
 
     /**
      * Получение детальной информации о товаре
+     *
      * @param id идентификатор товара
      * @return детали товара с категориями
      */
@@ -28,6 +30,7 @@ public interface ProductService {
 
     /**
      * Создание нового товара
+     *
      * @param request данные для создания товара
      * @return созданный товар с деталями
      */
@@ -35,7 +38,8 @@ public interface ProductService {
 
     /**
      * Обновление существующего товара
-     * @param id идентификатор товара
+     *
+     * @param id      идентификатор товара
      * @param request данные для обновления
      * @return обновленный товар с деталями
      */
@@ -43,19 +47,22 @@ public interface ProductService {
 
     /**
      * Удаление товара
+     *
      * @param id идентификатор товара
      */
     void deleteProduct(Long id);
 
     /**
      * Обновление привязки товара к категориям
-     * @param productId идентификатор товара
+     *
+     * @param productId   идентификатор товара
      * @param categoryIds набор идентификаторов категорий
      */
     void updateProductCategories(Long productId, Set<Long> categoryIds);
 
     /**
      * Получение категорий товара
+     *
      * @param productId идентификатор товара
      * @return набор категорий в формате DTO
      */

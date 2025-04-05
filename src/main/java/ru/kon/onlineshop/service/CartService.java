@@ -3,12 +3,12 @@ package ru.kon.onlineshop.service;
 import ru.kon.onlineshop.dto.cart.CartItemRequest;
 import ru.kon.onlineshop.dto.cart.CartResponse;
 import ru.kon.onlineshop.dto.cart.OrderResponse;
-import ru.kon.onlineshop.entity.User;
 
 public interface CartService {
 
     /**
      * Получение содержимого корзины пользователя
+     *
      * @param userId идентификатор пользователя
      * @return корзина с товарами и суммами
      */
@@ -16,7 +16,8 @@ public interface CartService {
 
     /**
      * Добавление товара в корзину пользователя
-     * @param userId идентификатор пользователя
+     *
+     * @param userId  идентификатор пользователя
      * @param request запрос с данными товара
      * @return обновленная корзина
      */
@@ -24,7 +25,8 @@ public interface CartService {
 
     /**
      * Обновление количества товара в корзине пользователя
-     * @param userId идентификатор пользователя
+     *
+     * @param userId  идентификатор пользователя
      * @param request запрос с новым количеством
      * @return обновленная корзина
      */
@@ -32,13 +34,15 @@ public interface CartService {
 
     /**
      * Удаление товара из корзины пользователя
-     * @param userId идентификатор пользователя
+     *
+     * @param userId    идентификатор пользователя
      * @param productId идентификатор товара
      */
     void removeItem(Long userId, Long productId);
 
     /**
      * Оформление заказа из корзины пользователя
+     *
      * @param userId идентификатор пользователя
      * @return информация о созданном заказе
      */
@@ -46,8 +50,9 @@ public interface CartService {
 
     /**
      * Перенос гостевой корзины в корзину пользователя
+     *
      * @param guestCart временная корзина гостя
-     * @param userId идентификатор целевого пользователя
+     * @param userId    идентификатор целевого пользователя
      */
     void mergeCarts(CartResponse guestCart, Long userId);
 }

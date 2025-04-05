@@ -6,6 +6,7 @@ public interface EmailService {
 
     /**
      * Отправляет подтверждение заказа на email пользователя.
+     *
      * @param order информация о заказе
      * @param email адрес получателя
      */
