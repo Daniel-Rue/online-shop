@@ -40,8 +40,13 @@ public class User {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.ROLE_USER;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
     }
 }
+
