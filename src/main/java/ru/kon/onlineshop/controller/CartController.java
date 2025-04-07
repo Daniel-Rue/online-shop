@@ -11,48 +11,41 @@ import ru.kon.onlineshop.service.CartService;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("/api/cart")
+@RequestMapping("/api/cart") // Базовый путь теперь без {userId}
 @RequiredArgsConstructor
 public class CartController {
 
     private final CartService cartService;
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<CartResponse> getCart(
-            @PathVariable Long userId
-    ) {
-        return ResponseEntity.ok(cartService.getCart(userId));
+    @GetMapping
+    public ResponseEntity<CartResponse> getCart() {
+        return ResponseEntity.ok(cartService.getCart());
     }
 
-    @PostMapping("/{userId}/add")
+    @PostMapping("/add")
     public ResponseEntity<CartResponse> addItem(
-            @PathVariable Long userId,
             @RequestBody @Valid CartItemRequest request
     ) {
-        return ResponseEntity.ok(cartService.addItem(userId, request));
+        return ResponseEntity.ok(cartService.addItem(request));
     }
 
-    @PutMapping("/{userId}/update")
+    @PutMapping("/update")
     public ResponseEntity<CartResponse> updateItem(
-            @PathVariable Long userId,
             @RequestBody @Valid CartItemRequest request
     ) {
-        return ResponseEntity.ok(cartService.updateItem(userId, request));
+        return ResponseEntity.ok(cartService.updateItem(request));
     }
 
-    @DeleteMapping("/{userId}/remove/{productId}")
+    @DeleteMapping("/remove/{productId}")
     public ResponseEntity<Void> removeItem(
-            @PathVariable Long userId,
             @PathVariable Long productId
     ) {
-        cartService.removeItem(userId, productId);
+        cartService.removeItem(productId);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{userId}/checkout")
-    public ResponseEntity<OrderResponse> checkout(
-            @PathVariable Long userId
-    ) {
-        return ResponseEntity.ok(cartService.checkout(userId));
+    @PostMapping("/checkout")
+    public ResponseEntity<OrderResponse> checkout() {
+        return ResponseEntity.ok(cartService.checkout());
     }
 }

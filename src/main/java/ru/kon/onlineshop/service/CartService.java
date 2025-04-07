@@ -7,49 +7,45 @@ import ru.kon.onlineshop.dto.cart.OrderResponse;
 public interface CartService {
 
     /**
-     * Получение содержимого корзины пользователя
+     * Получение содержимого корзины ТЕКУЩЕГО аутентифицированного пользователя
      *
-     * @param userId идентификатор пользователя
      * @return корзина с товарами и суммами
      */
-    CartResponse getCart(Long userId);
+    CartResponse getCart();
 
     /**
-     * Добавление товара в корзину пользователя
+     * Добавление товара в корзину ТЕКУЩЕГО аутентифицированного пользователя
      *
-     * @param userId  идентификатор пользователя
      * @param request запрос с данными товара
      * @return обновленная корзина
      */
-    CartResponse addItem(Long userId, CartItemRequest request);
+    CartResponse addItem(CartItemRequest request);
 
     /**
-     * Обновление количества товара в корзине пользователя
+     * Обновление количества товара в корзине ТЕКУЩЕГО аутентифицированного пользователя
      *
-     * @param userId  идентификатор пользователя
      * @param request запрос с новым количеством
      * @return обновленная корзина
      */
-    CartResponse updateItem(Long userId, CartItemRequest request);
+    CartResponse updateItem(CartItemRequest request);
 
     /**
-     * Удаление товара из корзины пользователя
+     * Удаление товара из корзины ТЕКУЩЕГО аутентифицированного пользователя
      *
-     * @param userId    идентификатор пользователя
      * @param productId идентификатор товара
      */
-    void removeItem(Long userId, Long productId);
+    void removeItem(Long productId);
 
     /**
-     * Оформление заказа из корзины пользователя
+     * Оформление заказа из корзины ТЕКУЩЕГО аутентифицированного пользователя
      *
-     * @param userId идентификатор пользователя
      * @return информация о созданном заказе
      */
-    OrderResponse checkout(Long userId);
+    OrderResponse checkout();
 
     /**
      * Перенос гостевой корзины в корзину пользователя
+     * (Оставляем userId, т.к. операция происходит в контексте конкретного пользователя)
      *
      * @param guestCart временная корзина гостя
      * @param userId    идентификатор целевого пользователя

@@ -1,6 +1,8 @@
 package ru.kon.onlineshop.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import ru.kon.onlineshop.dto.cart.*;
 import ru.kon.onlineshop.entity.*;
@@ -10,13 +12,13 @@ import ru.kon.onlineshop.exceptions.cart.InsufficientStockException;
 import ru.kon.onlineshop.exceptions.user.UserNotFoundException;
 import ru.kon.onlineshop.repository.*;
 import ru.kon.onlineshop.exceptions.product.ProductNotFoundException;
+import ru.kon.onlineshop.security.model.UserDetailsImpl;
 import ru.kon.onlineshop.service.CartService;
 import ru.kon.onlineshop.service.EmailService;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,14 +34,29 @@ public class CartServiceImpl implements CartService {
     private final UserRepository userRepository;
     private final EmailService emailService;
 
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof UserDetailsImpl)) {
+            throw new IllegalStateException("Невозможно определить аутентифицированного пользователя.");
+        }
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        if (userDetails.getId() == null) {
+            throw new IllegalStateException("ID пользователя не найден в деталях аутентификации.");
+        }
+        return userDetails.getId();
+    }
+
     @Override
-    public CartResponse getCart(Long userId) {
+    @Transactional
+    public CartResponse getCart() {
+        Long userId = getCurrentUserId();
         Cart cart = getOrCreateCart(userId);
         return mapToCartResponse(cart);
     }
 
     @Override
-    public CartResponse addItem(Long userId, CartItemRequest request) {
+    public CartResponse addItem(CartItemRequest request) {
+        Long userId = getCurrentUserId();
         Cart cart = getOrCreateCart(userId);
         Product product = getProduct(request.getProductId());
 
@@ -50,7 +67,8 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponse updateItem(Long userId, CartItemRequest request) {
+    public CartResponse updateItem(CartItemRequest request) {
+        Long userId = getCurrentUserId();
         Cart cart = getOrCreateCart(userId);
         CartItem item = getCartItem(cart, request.getProductId());
 
@@ -62,7 +80,8 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void removeItem(Long userId, Long productId) {
+    public void removeItem(Long productId) {
+        Long userId = getCurrentUserId();
         Cart cart = getOrCreateCart(userId);
         CartItem item = getCartItem(cart, productId);
         cartItemRepository.delete(item);
@@ -71,7 +90,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public OrderResponse checkout(Long userId) {
+    public OrderResponse checkout() {
+        Long userId = getCurrentUserId();
         Cart cart = getOrCreateCart(userId);
         validateCart(cart);
 
@@ -87,16 +107,29 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void mergeCarts(CartResponse guestCart, Long userId) {
-        guestCart.getItems().forEach(item -> {
+        Cart targetUserCart = getOrCreateCart(userId);
+
+        guestCart.getItems().forEach(itemDto -> {
             try {
-                addItem(userId, new CartItemRequest(
-                        item.getProductId(),
-                        item.getQuantity()
-                ));
-            } catch (InsufficientStockException ignored) {
+                Product product = getProduct(itemDto.getProductId());
+                int quantityToAdd = itemDto.getQuantity();
+
+                validateStock(product, quantityToAdd);
+
+                updateOrCreateCartItem(targetUserCart, product, quantityToAdd);
+
+            } catch (InsufficientStockException e) {
+                System.err.println("Не удалось добавить товар при слиянии корзин (недостаточно на складе): "
+                                   + itemDto.getProductName() + ", ID: " + itemDto.getProductId());
+            } catch (ProductNotFoundException e) {
+                System.err.println("Не удалось добавить товар при слиянии корзин (товар не найден): ID "
+                                   + itemDto.getProductId());
             }
         });
+
+        saveCart(targetUserCart);
     }
 
     private Cart getOrCreateCart(Long userId) {
@@ -112,6 +145,7 @@ public class CartServiceImpl implements CartService {
                 .user(user)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
+                .items(new java.util.ArrayList<>())
                 .build());
     }
 
@@ -121,34 +155,45 @@ public class CartServiceImpl implements CartService {
     }
 
     private void validateStock(Product product, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Количество товара должно быть положительным.");
+        }
         if (product.getStockQuantity() < quantity) {
             throw new InsufficientStockException(
-                    "Недостаточно товара: " + product.getName()
+                    "Недостаточно товара '" + product.getName() + "' на складе. Доступно: " + product.getStockQuantity()
             );
         }
     }
 
     private void updateOrCreateCartItem(Cart cart, Product product, int quantity) {
-        Optional<CartItem> itemOpt = cartItemRepository.findByCartAndProduct(cart, product);
+        Optional<CartItem> existingItemOpt = cart.getItems().stream()
+                .filter(item -> item.getProduct().getId().equals(product.getId()))
+                .findFirst();
 
-        if (itemOpt.isPresent()) {
-            CartItem item = itemOpt.get();
-            item.setQuantity(item.getQuantity() + quantity);
+        if (existingItemOpt.isPresent()) {
+            CartItem item = existingItemOpt.get();
+            int newQuantity = item.getQuantity() + quantity;
+            validateStock(product, newQuantity);
+            item.setQuantity(newQuantity);
             cartItemRepository.save(item);
         } else {
-            cartItemRepository.save(CartItem.builder()
+            validateStock(product, quantity);
+            CartItem newItem = CartItem.builder()
                     .cart(cart)
                     .product(product)
                     .quantity(quantity)
-                    .build()
-            );
+                    .build();
+            cart.getItems().add(newItem);
+            cartItemRepository.save(newItem);
         }
     }
 
     private CartItem getCartItem(Cart cart, Long productId) {
-        return cartItemRepository.findByCartAndProductId(cart, productId)
+        return cart.getItems().stream()
+                .filter(item -> item.getProduct().getId().equals(productId))
+                .findFirst()
                 .orElseThrow(() -> new CartItemNotFoundException(
-                        "Товар не найден в корзине: " + productId
+                        "Товар с ID " + productId + " не найден в корзине пользователя " + cart.getUser().getId()
                 ));
     }
 
@@ -158,12 +203,12 @@ public class CartServiceImpl implements CartService {
     }
 
     private void validateCart(Cart cart) {
-        if (cart.getItems().isEmpty()) {
-            throw new EmptyCartException("Корзина пуста");
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            throw new EmptyCartException("Корзина пуста. Невозможно оформить заказ.");
         }
-        cart.getItems().forEach(item ->
-                validateStock(item.getProduct(), item.getQuantity())
-        );
+        for (CartItem item : cart.getItems()) {
+            validateStock(item.getProduct(), item.getQuantity());
+        }
     }
 
     private Order createOrder(Cart cart) {
@@ -171,21 +216,26 @@ public class CartServiceImpl implements CartService {
                 .user(cart.getUser())
                 .totalAmount(calculateTotal(cart))
                 .createdAt(Instant.now())
+                .items(new java.util.ArrayList<>())
                 .build();
 
-        cart.getItems().forEach(item ->
-                order.getItems().add(OrderItem.builder()
-                        .order(order)
-                        .product(item.getProduct())
-                        .quantity(item.getQuantity())
-                        .priceAtOrder(getCurrentPrice(item.getProduct()))
-                        .build())
-        );
+        for (CartItem cartItem : cart.getItems()) {
+            OrderItem orderItem = OrderItem.builder()
+                    .order(order)
+                    .product(cartItem.getProduct())
+                    .quantity(cartItem.getQuantity())
+                    .priceAtOrder(getCurrentPrice(cartItem.getProduct()))
+                    .build();
+            order.getItems().add(orderItem);
+        }
 
         return orderRepository.save(order);
     }
 
     private BigDecimal calculateTotal(Cart cart) {
+        if (cart.getItems() == null) {
+            return BigDecimal.ZERO;
+        }
         return cart.getItems().stream()
                 .map(item -> getCurrentPrice(item.getProduct())
                         .multiply(BigDecimal.valueOf(item.getQuantity())))
@@ -194,6 +244,7 @@ public class CartServiceImpl implements CartService {
 
     private BigDecimal getCurrentPrice(Product product) {
         return Optional.ofNullable(product.getDiscountPrice())
+                .filter(dp -> dp.compareTo(BigDecimal.ZERO) > 0)
                 .orElse(product.getBasePrice());
     }
 
