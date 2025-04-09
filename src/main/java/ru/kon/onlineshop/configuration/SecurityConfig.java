@@ -36,30 +36,27 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers("/api/auth/**").permitAll() // Аутентификация/Регистрация
+                .antMatchers(HttpMethod.GET, "/api/products", "/api/products/").permitAll()
 
-                // --- Правила для ProductController ---
-                // POST, PUT, DELETE продукты - только ADMIN
-                .antMatchers(HttpMethod.POST, "/api/products", "/api/products/*/categories").hasRole("ADMIN")
-                .antMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
-                .antMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
-                // GET продукты - разрешен всем (включая анонимных)
-                .antMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                // Разрешает GET /products/{id}, /products/{id}/reviews, /products/{id}/rating и т.д.
+                .antMatchers(HttpMethod.GET, "/api/products/{productId:\\d+}/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
 
-                // --- Правила для CategoryController ---
-                // POST, PUT, DELETE категории - только ADMIN
+                // Эндпоинты для любых аутентифицированных пользователей
+                .antMatchers(HttpMethod.POST, "/api/products/{productId:\\d+}/reviews").authenticated()
+                .antMatchers("/api/cart/**").authenticated() // Корзина пользователя
+
+                // Эндпоинты ТОЛЬКО для ADMIN
+                .antMatchers(HttpMethod.DELETE, "/api/reviews/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.POST, "/api/categories").hasRole("ADMIN")
                 .antMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
-                // GET категории - разрешен всем (включая анонимных)
-                .antMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/products", "/api/products/{productId:\\d+}/categories").hasRole("ADMIN")
+                .antMatchers(HttpMethod.PUT, "/api/products/{productId:\\d+}/**").hasRole("ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/api/products/{productId:\\d+}/**").hasRole("ADMIN")
 
-                // --- Правила для CartController ---
-                // Все действия с корзиной требуют аутентификации (любой роли: USER или ADMIN)
-                .antMatchers("/api/cart/**").authenticated()
-
-                // --- Остальные запросы ---
-                // Любой другой запрос требует аутентификации
+                // Все остальные запросы требуют аутентификации
                 .anyRequest().authenticated();
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

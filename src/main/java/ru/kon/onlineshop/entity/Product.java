@@ -1,11 +1,14 @@
 package ru.kon.onlineshop.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -14,8 +17,8 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Table(name = "products")
-@ToString(exclude = "categories")
-@EqualsAndHashCode(exclude = "categories")
+@ToString(exclude = {"categories", "reviews"})
+@EqualsAndHashCode(exclude = {"categories", "reviews"})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,7 +48,14 @@ public class Product {
             joinColumns = @JoinColumn(name = "product_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
+
     @Builder.Default
-    @JsonIgnoreProperties
+    @JsonIgnore
     private Set<Category> categories = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    @JsonIgnore
+    private List<Review> reviews = new ArrayList<>();
+
 }
