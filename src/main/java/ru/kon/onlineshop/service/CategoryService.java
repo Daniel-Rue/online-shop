@@ -1,5 +1,7 @@
 package ru.kon.onlineshop.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import ru.kon.onlineshop.dto.category.CategoryDto;
 import ru.kon.onlineshop.dto.category.CategoryTreeDto;
 import ru.kon.onlineshop.dto.category.CreateCategoryRequest;
@@ -7,6 +9,7 @@ import ru.kon.onlineshop.dto.category.UpdateCategoryRequest;
 import ru.kon.onlineshop.dto.product.ProductDto;
 
 import java.util.List;
+import java.util.Map;
 
 public interface CategoryService {
 
@@ -58,4 +61,16 @@ public interface CategoryService {
      * @return список товаров
      */
     List<ProductDto> getProductsInCategory(Long categoryId, String sortBy, String sortOrder);
+
+    /**
+     * Получение страницы товаров, принадлежащих указанной категории (и всем ее подкатегориям),
+     * с возможностью применения фильтров и сортировки.
+     *
+     * @param categoryId ID категории, товары которой (включая подкатегории) нужно получить.
+     * @param filters    Карта фильтров, где ключ - название фильтра (например, "minPrice", "maxPrice", "minRating", "attr_1"),
+     *                   а значение - значение фильтра.
+     * @param pageable   Объект, содержащий информацию для пагинации (номер страницы, размер) и сортировки.
+     * @return Страница (Page) с товарами в формате ProductDto, удовлетворяющими критериям.
+     */
+    Page<ProductDto> getProductsInCategoryFiltered(Long categoryId, Map<String, String> filters, Pageable pageable);
 }

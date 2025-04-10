@@ -36,25 +36,41 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/**").permitAll() // Аутентификация/Регистрация
+
+                // --- Общедоступные эндпоинты ---
+                .antMatchers("/api/auth/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/products", "/api/products/").permitAll()
 
-                // Разрешает GET /products/{id}, /products/{id}/reviews, /products/{id}/rating и т.д.
+                // GET /products/{id}, /products/{id}/reviews, /products/{id}/rating, /products/{id}/categories, /products/{id}/attributes
                 .antMatchers(HttpMethod.GET, "/api/products/{productId:\\d+}/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
 
-                // Эндпоинты для любых аутентифицированных пользователей
+                // --- Эндпоинты для аутентифицированных пользователей ---
                 .antMatchers(HttpMethod.POST, "/api/products/{productId:\\d+}/reviews").authenticated()
-                .antMatchers("/api/cart/**").authenticated() // Корзина пользователя
+                .antMatchers("/api/cart/**").authenticated()
 
-                // Эндпоинты ТОЛЬКО для ADMIN
+                // --- Эндпоинты ТОЛЬКО для ADMIN ---
+                // Отзывы
                 .antMatchers(HttpMethod.DELETE, "/api/reviews/**").hasRole("ADMIN")
+
+                // Категории
                 .antMatchers(HttpMethod.POST, "/api/categories").hasRole("ADMIN")
                 .antMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
-                .antMatchers(HttpMethod.POST, "/api/products", "/api/products/{productId:\\d+}/categories").hasRole("ADMIN")
-                .antMatchers(HttpMethod.PUT, "/api/products/{productId:\\d+}/**").hasRole("ADMIN")
-                .antMatchers(HttpMethod.DELETE, "/api/products/{productId:\\d+}/**").hasRole("ADMIN")
+
+                // Атрибуты (глобально)
+                .antMatchers("/api/attributes/**").hasRole("ADMIN") // CRUD для самих атрибутов
+
+                // Продукты
+                .antMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
+                .antMatchers(HttpMethod.PUT, "/api/products/{productId:\\d+}").hasRole("ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/api/products/{productId:\\d+}").hasRole("ADMIN")
+
+                // Привязка категорий к продукту
+                .antMatchers(HttpMethod.POST, "/api/products/{productId:\\d+}/categories").hasRole("ADMIN")
+
+                // Обновление атрибутов конкретного продукта
+                .antMatchers(HttpMethod.PUT, "/api/products/{productId:\\d+}/attributes").hasRole("ADMIN")
 
                 // Все остальные запросы требуют аутентификации
                 .anyRequest().authenticated();

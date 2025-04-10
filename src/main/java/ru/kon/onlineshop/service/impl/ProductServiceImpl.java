@@ -4,18 +4,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.kon.onlineshop.dto.category.CategoryDto;
-import ru.kon.onlineshop.entity.Category;
-import ru.kon.onlineshop.entity.Product;
 import ru.kon.onlineshop.dto.product.CreateProductRequest;
 import ru.kon.onlineshop.dto.product.ProductDetailsDto;
 import ru.kon.onlineshop.dto.product.ProductDto;
 import ru.kon.onlineshop.dto.product.UpdateProductRequest;
-import ru.kon.onlineshop.repository.CategoryRepository;
-import ru.kon.onlineshop.repository.ProductRepository;
+import ru.kon.onlineshop.dto.product.attribute.AttributeValueInputDto;
+import ru.kon.onlineshop.dto.product.attribute.ProductAttributeValueDto;
+import ru.kon.onlineshop.entity.*;
+import ru.kon.onlineshop.exceptions.BadRequestException;
 import ru.kon.onlineshop.exceptions.product.ProductNotFoundException;
+import ru.kon.onlineshop.exceptions.product.attribute.ResourceNotFoundException;
+import ru.kon.onlineshop.repository.AttributeRepository;
+import ru.kon.onlineshop.repository.CategoryRepository;
+import ru.kon.onlineshop.repository.ProductAttributeValueRepository;
+import ru.kon.onlineshop.repository.ProductRepository;
 import ru.kon.onlineshop.service.ProductService;
 
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +34,8 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final AttributeRepository attributeRepository;
+    private final ProductAttributeValueRepository productAttributeValueRepository;
 
     @Override
     public List<ProductDto> getAllProducts(String sortBy, String sortOrder) {
@@ -57,6 +65,7 @@ public class ProductServiceImpl implements ProductService {
                 .discountPrice(request.getDiscountPrice())
                 .stockQuantity(request.getStockQuantity())
                 .categories(categories)
+                .attributeValues(new HashSet<>())
                 .build();
 
         Product savedProduct = productRepository.save(product);
@@ -106,6 +115,47 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toSet());
     }
 
+    public void updateProductAttributeValues(Long productId, List<AttributeValueInputDto> values) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
+        productAttributeValueRepository.deleteByProductId(productId);
+
+        Set<ProductAttributeValue> newAttributeValues = new HashSet<>();
+        for (AttributeValueInputDto inputDto : values) {
+            Attribute attribute = attributeRepository.findById(inputDto.getAttributeId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Attribute", "id", inputDto.getAttributeId()
+                    ));
+
+            validateAttributeValue(attribute, inputDto.getValue());
+
+            ProductAttributeValue pav = ProductAttributeValue.builder()
+                    .product(product)
+                    .attribute(attribute)
+                    .value(inputDto.getValue())
+                    .build();
+            newAttributeValues.add(pav);
+        }
+
+        product.getAttributeValues().clear();
+        product.getAttributeValues().addAll(newAttributeValues);
+
+        productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public List<ProductAttributeValueDto> getProductAttributeValues(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
+        return product.getAttributeValues().stream()
+                .map(this::mapToProductAttributeValueDto)
+                .collect(Collectors.toList());
+    }
+
+
     private ProductDto convertToProductDto(Product product) {
         ProductDto dto = new ProductDto();
         dto.setId(product.getId());
@@ -131,6 +181,12 @@ public class ProductServiceImpl implements ProductService {
                         .map(Category::getId)
                         .collect(Collectors.toSet())
         );
+        dto.setAttributeValues(
+                product.getAttributeValues().stream()
+                        .map(this::mapToProductAttributeValueDto)
+                        .collect(Collectors.toList())
+        );
+
         return dto;
     }
 
@@ -139,5 +195,42 @@ public class ProductServiceImpl implements ProductService {
         dto.setId(category.getId());
         dto.setName(category.getName());
         return dto;
+    }
+
+    private ProductAttributeValueDto mapToProductAttributeValueDto(ProductAttributeValue pav) {
+        ProductAttributeValueDto dto = new ProductAttributeValueDto();
+        dto.setAttributeId(pav.getAttribute().getId());
+        dto.setAttributeName(pav.getAttribute().getName());
+        dto.setAttributeType(pav.getAttribute().getType());
+        dto.setValue(pav.getValue());
+        dto.setUnit(pav.getAttribute().getUnit());
+        return dto;
+    }
+
+    private void validateAttributeValue(Attribute attribute, String value) {
+        AttributeType type = attribute.getType();
+        try {
+            switch (type) {
+                case NUMBER:
+                    new BigDecimal(value);
+                    break;
+                case BOOLEAN:
+                    if (!value.equalsIgnoreCase("true") && !value.equalsIgnoreCase("false")) {
+                        throw new IllegalArgumentException("Значение должно быть 'true' или 'false'");
+                    }
+                    break;
+                case STRING:
+                    if (value == null) {
+                        throw new IllegalArgumentException("Строковое значение не может быть null");
+                    }
+                    break;
+                default:
+                    throw new IllegalStateException("Неподдерживаемый тип атрибута: " + type);
+            }
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Неверный формат числового значения '" + value + "' для атрибута '" + attribute.getName() + "'");
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Неверное значение '" + value + "' для атрибута '" + attribute.getName() + "': " + e.getMessage());
+        }
     }
 }

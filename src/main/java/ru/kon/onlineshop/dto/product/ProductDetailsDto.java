@@ -2,7 +2,11 @@ package ru.kon.onlineshop.dto.product;
 
 import lombok.*;
 import ru.kon.onlineshop.dto.category.CategoryDto;
+import ru.kon.onlineshop.dto.product.attribute.ProductAttributeValueDto;
+import ru.kon.onlineshop.dto.review.ReviewDto;
+
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -19,4 +23,6 @@ public class ProductDetailsDto {
     private int stockQuantity;
     @Singular
     private Set<Long> categoryIds;
+    private List<ProductAttributeValueDto> attributeValues;
+    private List<ReviewDto> reviews;
 }

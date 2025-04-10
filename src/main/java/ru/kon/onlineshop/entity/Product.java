@@ -17,8 +17,8 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Table(name = "products")
-@ToString(exclude = {"categories", "reviews"})
-@EqualsAndHashCode(exclude = {"categories", "reviews"})
+@ToString(exclude = {"categories", "reviews", "attributeValues"})
+@EqualsAndHashCode(exclude = {"categories", "reviews", "attributeValues"})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,5 +57,9 @@ public class Product {
     @Builder.Default
     @JsonIgnore
     private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<ProductAttributeValue> attributeValues = new HashSet<>();
 
 }

@@ -1,6 +1,9 @@
 package ru.kon.onlineshop.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +16,7 @@ import ru.kon.onlineshop.service.CategoryService;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -64,4 +68,16 @@ public class CategoryController {
         List<ProductDto> products = categoryService.getProductsInCategory(id, sortBy, sortOrder);
         return ResponseEntity.ok(products);
     }
+
+    @GetMapping("/{id}/products/filtered")
+    public ResponseEntity<Page<ProductDto>> getCategoryProductsFiltered(
+            @PathVariable Long id,
+            @RequestParam(required = false) Map<String, String> filters,
+            @PageableDefault(size = 10, sort = "basePrice") Pageable pageable) {
+
+        Page<ProductDto> productsPage = categoryService.getProductsInCategoryFiltered(id, filters, pageable);
+        return ResponseEntity.ok(productsPage);
+    }
+
+
 }

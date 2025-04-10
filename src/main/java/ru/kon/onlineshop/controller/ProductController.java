@@ -9,6 +9,8 @@ import ru.kon.onlineshop.dto.product.CreateProductRequest;
 import ru.kon.onlineshop.dto.product.ProductDetailsDto;
 import ru.kon.onlineshop.dto.product.ProductDto;
 import ru.kon.onlineshop.dto.product.UpdateProductRequest;
+import ru.kon.onlineshop.dto.product.attribute.ProductAttributeValueDto;
+import ru.kon.onlineshop.dto.product.attribute.UpdateProductAttributesRequest;
 import ru.kon.onlineshop.service.ProductService;
 
 import javax.validation.Valid;
@@ -72,5 +74,20 @@ public class ProductController {
             @PathVariable Long productId) {
         Set<CategoryDto> categories = productService.getProductCategories(productId);
         return ResponseEntity.ok(categories);
+    }
+
+    @PutMapping("/{productId}/attributes")
+    public ResponseEntity<Void> updateProductAttributes(
+            @PathVariable Long productId,
+            @Valid @RequestBody UpdateProductAttributesRequest request) {
+        productService.updateProductAttributeValues(productId, request.getAttributeValues());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{productId}/attributes")
+    public ResponseEntity<List<ProductAttributeValueDto>> getProductAttributes(
+            @PathVariable Long productId) {
+        List<ProductAttributeValueDto> attributeValues = productService.getProductAttributeValues(productId);
+        return ResponseEntity.ok(attributeValues);
     }
 }
