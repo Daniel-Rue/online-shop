@@ -42,12 +42,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        if (userService.existsByEmail(request.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(Collections.singletonMap("error", "Пользователь с такой почтой уже зарегистрирован!"));
-        }
-
         userService.registerUser(request);
 
         return ResponseEntity.ok(Collections.singletonMap("message", "Пользователь успешно зарегистрирован!"));

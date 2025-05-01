@@ -29,6 +29,7 @@ import ru.kon.onlineshop.service.impl.CartServiceImpl;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -257,16 +258,19 @@ class CartServiceImplTest {
 
     @Test
     void removeItem_whenItemExists_shouldRemoveItem() {
-        testCart.getItems().add(cartItem1);
+        testCart.setItems(new ArrayList<>(Collections.singletonList(cartItem1)));
+        assertEquals(1, testCart.getItems().size());
+
         when(cartRepository.findByUserId(USER_ID)).thenReturn(Optional.of(testCart));
-        doNothing().when(cartItemRepository).delete(cartItem1);
-        when(cartRepository.save(testCart)).thenReturn(testCart);
+        when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         cartService.removeItem(PRODUCT_ID_1);
 
+        assertTrue(testCart.getItems().isEmpty(), "Товар должен быть удалён из списка корзины");
+
         verify(cartRepository).findByUserId(USER_ID);
-        verify(cartItemRepository).delete(cartItem1);
         verify(cartRepository).save(testCart);
+        verify(cartItemRepository, never()).delete(any(CartItem.class));
     }
 
     @Test

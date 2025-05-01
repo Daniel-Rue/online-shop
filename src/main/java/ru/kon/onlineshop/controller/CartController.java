@@ -11,7 +11,7 @@ import ru.kon.onlineshop.service.CartService;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("/api/cart") // Базовый путь теперь без {userId}
+@RequestMapping("/api/cart")
 @RequiredArgsConstructor
 public class CartController {
 

@@ -84,7 +84,7 @@ public class CartServiceImpl implements CartService {
         Long userId = getCurrentUserId();
         Cart cart = getOrCreateCart(userId);
         CartItem item = getCartItem(cart, productId);
-        cartItemRepository.delete(item);
+        cart.getItems().remove(item);
         saveCart(cart);
     }
 
