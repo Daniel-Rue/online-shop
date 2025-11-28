@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение заказа</title>
+    <style>
+        /* Reset стилей для совместимости с почтовыми клиентами */
+        body, table, td, div {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eeeeee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+        }
+        .order-table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 2px solid #eeeeee;
+        }
+        .order-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .order-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        .total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eeeeee;
+            text-align: center;
+            color: #777777;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img src="https://example.com/logo.png" class="logo" alt="Логотип компании">
+        <h1 style="color: #2c3e50; margin: 0;">Ваш заказ №<span th:text="${order.id}"></span></h1>
+    </div>
+
+    <table class="order-table">
+        <thead>
+        <tr>
+            <th>Товар</th>
+            <th>Количество</th>
+            <th>Цена</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${order.items}">
+            <td th:text="${item.product.name}"></td>
+            <td th:text="${item.quantity}"></td>
+            <td th:text="${#numbers.formatDecimal(item.priceAtOrder, 1, 2, 'COMMA') + ' ₽'}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="total">
+        Итого к оплате:
+        <span th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2, 'COMMA') + ' ₽'}"></span>
+    </div>
+
+    <div class="footer">
+        <p>Спасибо за ваш заказ!<br>
+            По вопросам обращайтесь: <a href="mailto:support@example.com">support@example.com</a></p>
+        <p>© 2024 Название компании. Все права защищены.</p>
+    </div>
+</div>
+</body>
+</html>
